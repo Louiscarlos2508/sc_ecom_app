@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/utils/validators.dart';
+import '../../../../shared/utils/security_utils.dart';
 import '../../../home/presentation/screens/user_navigation_screen.dart';
 import '../providers/auth_form_provider.dart';
 
@@ -104,12 +106,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     filled: true,
                     fillColor: AppColors.surface,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre nom';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateName,
                 ),
                 const SizedBox(height: 20),
                 // Email
@@ -125,15 +122,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     filled: true,
                     fillColor: AppColors.surface,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Email invalide';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateEmail,
                 ),
                 const SizedBox(height: 20),
                 // Téléphone
@@ -149,12 +138,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     filled: true,
                     fillColor: AppColors.surface,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre téléphone';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validatePhone,
                 ),
                 const SizedBox(height: 20),
                 // Ville
@@ -179,12 +163,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ref.read(registerSelectedCityProvider.notifier).state =
                         value;
                   },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez sélectionner votre ville';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateCity,
                 ),
                 const SizedBox(height: 20),
                 // Code parrainage (OBLIGATOIRE)
@@ -212,15 +191,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     filled: true,
                     fillColor: AppColors.surface,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Le code parrainage est obligatoire';
-                    }
-                    if (value.length < 4) {
-                      return 'Code parrainage invalide';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateReferralCode,
                 ),
                 const SizedBox(height: 20),
                 // Mot de passe
@@ -248,15 +219,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     filled: true,
                     fillColor: AppColors.surface,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer un mot de passe';
-                    }
-                    if (value.length < 6) {
-                      return 'Le mot de passe doit contenir au moins 6 caractères';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validatePassword,
                 ),
                 const SizedBox(height: 20),
                 // Confirmation mot de passe
@@ -284,15 +247,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     filled: true,
                     fillColor: AppColors.surface,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez confirmer votre mot de passe';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Les mots de passe ne correspondent pas';
-                    }
-                    return null;
-                  },
+                  validator: (value) => Validators.validateConfirmPassword(
+                        value,
+                        _passwordController.text,
+                      ),
                 ),
                 const SizedBox(height: 32),
                 // Bouton inscription

@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/models/product.dart';
+import '../../../../shared/utils/validators.dart';
+import '../../../../shared/utils/security_utils.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../product/presentation/providers/product_provider.dart';
 
 /// Écran d'ajout de produit (vendeur)
 class AddProductScreen extends ConsumerStatefulWidget {
@@ -17,6 +21,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _tradeDescriptionController = TextEditingController();
+  final _minimumQuantityController = TextEditingController(text: '1');
+  final _wholesalePriceController = TextEditingController();
   final List<String> _imageUrls = [];
   bool _isSecondHand = false;
   bool _isTradable = false;
@@ -27,6 +33,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     _descriptionController.dispose();
     _priceController.dispose();
     _tradeDescriptionController.dispose();
+    _minimumQuantityController.dispose();
+    _wholesalePriceController.dispose();
     super.dispose();
   }
 
@@ -55,7 +63,71 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         return;
       }
 
-      // TODO: Sauvegarder le produit
+      final user = ref.read(currentUserProvider);
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vous devez être connecté'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+
+      // Vérifier que l'utilisateur peut vendre
+      if (!SecurityUtils.canSell(user)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              user.isWholesaler && !user.isWholesalerApproved
+                  ? 'Votre compte grossiste est en attente d\'approbation'
+                  : 'Vous n\'êtes pas autorisé à vendre',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+
+      // Valider le prix
+      final priceError = Validators.validatePrice(_priceController.text);
+      if (priceError != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(priceError),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+
+      final price = int.parse(_priceController.text);
+
+      // Sanitizer les entrées
+      final name = SecurityUtils.sanitizeInput(_nameController.text);
+      final description = SecurityUtils.sanitizeInput(_descriptionController.text);
+      final tradeDescription = _isTradable && _tradeDescriptionController.text.isNotEmpty
+          ? SecurityUtils.sanitizeInput(_tradeDescriptionController.text)
+          : null;
+
+      final newProduct = Product(
+        id: 'prod_${DateTime.now().millisecondsSinceEpoch}',
+        name: name,
+        description: description,
+        priceInFcfa: price,
+        imageUrl: _imageUrls.isNotEmpty ? _imageUrls[0] : '',
+        imageUrls: _imageUrls,
+        sellerId: user.id,
+        sellerName: user.name,
+        city: user.city,
+        isSecondHand: _isSecondHand,
+        isVerifiedWholesaler: user.isWholesaler && user.isWholesalerApproved,
+        isTradable: _isTradable,
+        tradeDescription: tradeDescription,
+      );
+
+      ref.read(productProvider.notifier).addProduct(newProduct);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Produit ajouté avec succès !'),
@@ -68,6 +140,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(currentUserProvider);
+    
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -186,12 +260,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   labelText: 'Nom du produit *',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer le nom du produit';
-                  }
-                  return null;
-                },
+                validator: Validators.validateProductName,
               ),
               const SizedBox(height: 16),
               // Description
@@ -202,12 +271,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   labelText: 'Description *',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer une description';
-                  }
-                  return null;
-                },
+                validator: Validators.validateProductDescription,
               ),
               const SizedBox(height: 16),
               // Prix
@@ -219,15 +283,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   border: OutlineInputBorder(),
                   suffixText: 'FCFA',
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer le prix';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Prix invalide';
-                  }
-                  return null;
-                },
+                validator: Validators.validatePrice,
               ),
               const SizedBox(height: 24),
               // État du produit
@@ -250,6 +306,74 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                 activeColor: AppColors.primary,
               ),
               const SizedBox(height: 24),
+              // Options grossiste (si approuvé)
+              Consumer(
+                builder: (context, ref, _) {
+                  final currentUser = ref.watch(currentUserProvider);
+                  final isWholesalerApproved = currentUser?.isWholesaler == true && 
+                      currentUser?.isWholesalerApproved == true;
+                  
+                  if (!isWholesalerApproved) {
+                    return const SizedBox.shrink();
+                  }
+                  
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Options Grossiste',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _minimumQuantityController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Quantité minimale de commande *',
+                          hintText: 'Ex: 10 (minimum 10 unités)',
+                          border: OutlineInputBorder(),
+                          suffixText: 'unités',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Quantité minimale requise';
+                          }
+                          final qty = int.tryParse(value);
+                          if (qty == null || qty < 1) {
+                            return 'Quantité minimale doit être au moins 1';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _wholesalePriceController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Prix de gros (optionnel)',
+                          hintText: 'Prix spécial pour commandes en gros',
+                          border: OutlineInputBorder(),
+                          suffixText: 'FCFA',
+                        ),
+                        validator: (value) {
+                          if (value != null && value.isNotEmpty) {
+                            final wholesale = int.tryParse(value);
+                            if (wholesale == null || wholesale <= 0) {
+                              return 'Prix de gros invalide';
+                            }
+                            final price = int.tryParse(_priceController.text);
+                            if (price != null && wholesale >= price) {
+                              return 'Le prix de gros doit être inférieur au prix normal';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                },
+              ),
               // Troc
               SwitchListTile(
                 title: const Text('Autoriser le troc'),

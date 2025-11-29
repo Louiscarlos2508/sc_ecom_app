@@ -16,6 +16,10 @@ class Product {
     this.reportReason,
     this.isTradable = false, // Peut être troqué
     this.tradeDescription, // Description pour le troc
+    this.isTradeOnly = false, // Produit uniquement pour troc (non visible dans la plateforme)
+    // Champs spécifiques aux grossistes
+    this.minimumQuantity = 1, // Quantité minimale de commande (pour grossistes)
+    this.wholesalePrice, // Prix de gros (si différent du prix normal)
   });
 
   final String id;
@@ -33,6 +37,10 @@ class Product {
   final String? reportReason;
   final bool isTradable; // Peut être troqué
   final String? tradeDescription; // Description pour le troc
+  final bool isTradeOnly; // Produit uniquement pour troc (non visible dans la plateforme)
+  // Champs spécifiques aux grossistes
+  final int minimumQuantity; // Quantité minimale de commande (pour grossistes)
+  final int? wholesalePrice; // Prix de gros (si différent du prix normal)
 
   factory Product.fromJson(Map<String, dynamic> json) {
     final imageUrl = json['imageUrl'] as String? ?? '';
@@ -57,6 +65,9 @@ class Product {
       reportReason: json['reportReason'] as String?,
       isTradable: json['isTradable'] as bool? ?? false,
       tradeDescription: json['tradeDescription'] as String?,
+      isTradeOnly: json['isTradeOnly'] as bool? ?? false,
+      minimumQuantity: json['minimumQuantity'] as int? ?? 1,
+      wholesalePrice: json['wholesalePrice'] as int?,
     );
   }
 
@@ -77,6 +88,9 @@ class Product {
       'reportReason': reportReason,
       'isTradable': isTradable,
       'tradeDescription': tradeDescription,
+      'isTradeOnly': isTradeOnly,
+      'minimumQuantity': minimumQuantity,
+      'wholesalePrice': wholesalePrice,
     };
   }
 }

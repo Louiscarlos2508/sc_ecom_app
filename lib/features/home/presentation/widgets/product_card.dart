@@ -88,12 +88,37 @@ class ProductCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  FcfaPrice(
-                    price: product.priceInFcfa,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FcfaPrice(
+                        price: product.priceInFcfa,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      // Minimum de commande pour produits en gros
+                      if (product.isVerifiedWholesaler && product.minimumQuantity > 1) ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppColors.warning),
+                          ),
+                          child: Text(
+                            'Minimum de commande: ${product.minimumQuantity} unités',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.warning,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
                         ),
+                      ],
+                    ],
                   ),
                   Row(
                     children: [

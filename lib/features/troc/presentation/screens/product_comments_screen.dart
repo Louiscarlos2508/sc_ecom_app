@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/models/product_comment.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../product/presentation/providers/product_comment_provider.dart';
 
 /// Écran des commentaires d'un produit
 class ProductCommentsScreen extends ConsumerStatefulWidget {
@@ -19,10 +21,22 @@ class ProductCommentsScreen extends ConsumerStatefulWidget {
 
 class _ProductCommentsScreenState
     extends ConsumerState<ProductCommentsScreen> {
-  final List<ProductComment> _comments = []; // TODO: Charger depuis provider
+  final _commentController = TextEditingController();
+  int _rating = 5;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final comments = ref.watch(
+      productCommentsByProductIdProvider(widget.productId),
+    );
+    final user = ref.watch(currentUserProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -30,7 +44,7 @@ class _ProductCommentsScreenState
         foregroundColor: AppColors.onPrimary,
         title: const Text('Commentaires'),
       ),
-      body: _comments.isEmpty
+      body: comments.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -58,11 +72,14 @@ class _ProductCommentsScreenState
                 ],
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _comments.length,
-              itemBuilder: (context, index) {
-                final comment = _comments[index];
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: comments.length,
+                    itemBuilder: (context, index) {
+                      final comment = comments[index];
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: Padding(
@@ -122,7 +139,113 @@ class _ProductCommentsScreenState
                     ),
                   ),
                 );
-              },
+                    },
+                  ),
+                ),
+                // Formulaire d'ajout de commentaire
+                if (user != null)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, -2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ajouter un commentaire',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: List.generate(
+                            5,
+                            (i) => IconButton(
+                              icon: Icon(
+                                i < _rating ? Icons.star : Icons.star_border,
+                                color: AppColors.warning,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _rating = i + 1;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _commentController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            hintText: 'Votre commentaire...',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (_commentController.text.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Veuillez entrer un commentaire',
+                                    ),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              try {
+                                await ref
+                                    .read(productCommentProvider.notifier)
+                                    .addComment(
+                                      productId: widget.productId,
+                                      userId: user.id,
+                                      userName: user.name,
+                                      comment: _commentController.text,
+                                      rating: _rating,
+                                    );
+                                _commentController.clear();
+                                setState(() {
+                                  _rating = 5;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Commentaire ajouté !'),
+                                    backgroundColor: AppColors.success,
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(e.toString()),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: AppColors.onPrimary,
+                            ),
+                            child: const Text('Publier'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
     );
   }

@@ -1,5 +1,8 @@
 import '../models/product.dart';
 import '../models/user.dart';
+import '../models/order.dart';
+import '../models/product_comment.dart';
+import '../models/trade.dart';
 
 /// Données de test pour ECONOMAX
 class MockData {
@@ -63,6 +66,8 @@ class MockData {
       sellerName: 'Amadou Traoré',
       city: 'Ouagadougou',
       isVerifiedWholesaler: true,
+      minimumQuantity: 10, // Quantité minimale pour grossiste
+      wholesalePrice: 2200, // Prix de gros (10% de réduction)
     ),
     Product(
       id: 'prod2',
@@ -96,6 +101,8 @@ class MockData {
       sellerName: 'Amadou Traoré',
       city: 'Ouagadougou',
       isVerifiedWholesaler: true,
+      minimumQuantity: 5, // Quantité minimale pour grossiste
+      wholesalePrice: 1300, // Prix de gros
     ),
     Product(
       id: 'prod4',
@@ -129,6 +136,8 @@ class MockData {
       sellerName: 'Amadou Traoré',
       city: 'Ouagadougou',
       isVerifiedWholesaler: true,
+      minimumQuantity: 20, // Quantité minimale pour grossiste
+      wholesalePrice: 1000, // Prix de gros
     ),
     Product(
       id: 'prod6',
@@ -144,6 +153,134 @@ class MockData {
       sellerName: 'Fatou Diallo',
       city: 'Bobo-Dioulasso',
       isSecondHand: true,
+    ),
+  ];
+
+  /// Commandes de démonstration
+  static final List<Order> demoOrders = [
+    Order(
+      id: 'order1',
+      userId: 'user3',
+      items: [
+        OrderItem(
+          product: demoProducts[0], // Riz local premium
+          quantity: 2,
+          priceAtPurchase: 2500,
+        ),
+        OrderItem(
+          product: demoProducts[2], // Arachides grillées
+          quantity: 5,
+          priceAtPurchase: 1500,
+        ),
+      ],
+      totalAmount: 12500, // (2500 * 2) + (1500 * 5)
+      deliveryFee: 1000,
+      status: OrderStatus.delivered,
+      createdAt: DateTime.now().subtract(const Duration(days: 15)),
+      deliveryAddress: 'Secteur 30, Ouagadougou',
+      deliveryCity: 'Ouagadougou',
+    ),
+    Order(
+      id: 'order2',
+      userId: 'user3',
+      items: [
+        OrderItem(
+          product: demoProducts[1], // Téléphone Android
+          quantity: 1,
+          priceAtPurchase: 45000,
+        ),
+      ],
+      totalAmount: 45000,
+      deliveryFee: 1000,
+      status: OrderStatus.shipped,
+      createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      deliveryAddress: 'Secteur 30, Ouagadougou',
+      deliveryCity: 'Ouagadougou',
+    ),
+    Order(
+      id: 'order3',
+      userId: 'user3',
+      items: [
+        OrderItem(
+          product: demoProducts[3], // Vélo d'occasion
+          quantity: 1,
+          priceAtPurchase: 35000,
+        ),
+      ],
+      totalAmount: 35000,
+      deliveryFee: 1000,
+      status: OrderStatus.paid,
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      deliveryAddress: 'Secteur 30, Ouagadougou',
+      deliveryCity: 'Ouagadougou',
+    ),
+  ];
+
+  /// Commentaires de démonstration
+  static final List<ProductComment> demoComments = [
+    ProductComment(
+      id: 'comment1',
+      productId: 'prod1',
+      userId: 'user3',
+      userName: 'Ibrahim Sawadogo',
+      rating: 5,
+      comment: 'Excellent riz ! Qualité supérieure, je recommande vivement.',
+      createdAt: DateTime.now().subtract(const Duration(days: 10)),
+      orderId: 'order1',
+    ),
+    ProductComment(
+      id: 'comment2',
+      productId: 'prod1',
+      userId: 'user3',
+      userName: 'Ibrahim Sawadogo',
+      rating: 4,
+      comment: 'Très bon produit, livraison rapide. Merci !',
+      createdAt: DateTime.now().subtract(const Duration(days: 8)),
+      orderId: 'order1',
+    ),
+    ProductComment(
+      id: 'comment3',
+      productId: 'prod2',
+      userId: 'user3',
+      userName: 'Ibrahim Sawadogo',
+      rating: 5,
+      comment: 'Téléphone en excellent état, comme neuf. Vendeur sérieux.',
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      orderId: 'order2',
+    ),
+  ];
+
+  /// Propositions de troc de démonstration
+  static final List<Trade> demoTrades = [
+    Trade(
+      id: 'trade1',
+      productId: 'prod2', // Téléphone Android
+      sellerId: 'user2',
+      buyerId: 'user3',
+      buyerProductId: 'prod4', // Vélo d'occasion
+      status: TradeStatus.pending,
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      message: 'Bonjour, je propose mon vélo en échange de votre téléphone. Il est en très bon état.',
+    ),
+    Trade(
+      id: 'trade2',
+      productId: 'prod4', // Vélo d'occasion
+      sellerId: 'user2',
+      buyerId: 'user1',
+      buyerProductId: 'prod3', // Arachides grillées
+      status: TradeStatus.accepted,
+      createdAt: DateTime.now().subtract(const Duration(days: 7)),
+      message: 'Échange accepté !',
+    ),
+    Trade(
+      id: 'trade3',
+      productId: 'prod6', // Télévision LED
+      sellerId: 'user2',
+      buyerId: 'user1',
+      buyerProductId: 'prod1', // Riz local premium
+      status: TradeStatus.rejected,
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      message: 'Désolé, je ne suis pas intéressé par cet échange.',
     ),
   ];
 }

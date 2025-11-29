@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/models/user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../order/presentation/screens/order_list_screen.dart';
+import '../../../order/presentation/providers/order_provider.dart';
 import '../../../seller/presentation/screens/seller_dashboard_screen.dart';
 import '../../../seller/presentation/screens/seller_company_info_screen.dart';
 import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../../troc/presentation/screens/client_trades_screen.dart';
+import '../../../troc/presentation/screens/seller_trades_screen.dart';
+import '../../../../shared/models/order.dart';
 import 'settings_screen.dart';
 
 /// Écran de compte utilisateur (inspiré AliExpress, adapté ECONOMAX)
@@ -139,37 +144,58 @@ class AccountScreen extends ConsumerWidget {
                       ),
                     );
                   },
-                  children: [
-                    _OrderStatusRow(
-                      items: [
-                        _OrderStatusItem(
-                          icon: Icons.payment,
-                          label: 'À payer',
-                          count: 0,
-                        ),
-                        _OrderStatusItem(
-                          icon: Icons.local_shipping,
-                          label: 'À expédier',
-                          count: 0,
-                        ),
-                        _OrderStatusItem(
-                          icon: Icons.delivery_dining,
-                          label: 'Expédiée',
-                          count: 0,
-                        ),
-                        _OrderStatusItem(
-                          icon: Icons.rate_review,
-                          label: 'À noter',
-                          count: 0,
-                        ),
-                        _OrderStatusItem(
-                          icon: Icons.assignment_return,
-                          label: 'Retours',
-                          count: 0,
-                        ),
-                      ],
-                    ),
-                  ],
+                          children: [
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final orders = ref.watch(userOrdersProvider);
+                                final pendingCount = orders
+                                    .where((o) => o.status == OrderStatus.pending)
+                                    .length;
+                                final shippingCount = orders
+                                    .where((o) => o.status == OrderStatus.shipping)
+                                    .length;
+                                final shippedCount = orders
+                                    .where((o) => o.status == OrderStatus.shipped)
+                                    .length;
+                                final toRateCount = orders
+                                    .where((o) => o.status == OrderStatus.delivered)
+                                    .length;
+                                final returnedCount = orders
+                                    .where((o) => o.status == OrderStatus.returned)
+                                    .length;
+                                
+                                return _OrderStatusRow(
+                                  items: [
+                                    _OrderStatusItem(
+                                      icon: Icons.payment,
+                                      label: 'À payer',
+                                      count: pendingCount,
+                                    ),
+                                    _OrderStatusItem(
+                                      icon: Icons.local_shipping,
+                                      label: 'À expédier',
+                                      count: shippingCount,
+                                    ),
+                                    _OrderStatusItem(
+                                      icon: Icons.delivery_dining,
+                                      label: 'Expédiée',
+                                      count: shippedCount,
+                                    ),
+                                    _OrderStatusItem(
+                                      icon: Icons.rate_review,
+                                      label: 'À noter',
+                                      count: toRateCount,
+                                    ),
+                                    _OrderStatusItem(
+                                      icon: Icons.assignment_return,
+                                      label: 'Retours',
+                                      count: returnedCount,
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
                 ),
                 const SizedBox(height: 16),
                 // Actions principales
@@ -178,6 +204,18 @@ class AccountScreen extends ConsumerWidget {
                   children: [
                     _ActionRow(
                       items: [
+                        _ActionItem(
+                          icon: Icons.swap_horiz,
+                          label: 'Mes trocs',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ClientTradesScreen(),
+                              ),
+                            );
+                          },
+                        ),
                         _ActionItem(
                           icon: Icons.history,
                           label: 'Historique',
@@ -197,13 +235,6 @@ class AccountScreen extends ConsumerWidget {
                           label: 'Coupons',
                           onTap: () {
                             // TODO: Naviguer vers coupons
-                          },
-                        ),
-                        _ActionItem(
-                          icon: Icons.store,
-                          label: 'Boutiques suivies',
-                          onTap: () {
-                            // TODO: Naviguer vers boutiques suivies
                           },
                         ),
                       ],
@@ -262,8 +293,20 @@ class AccountScreen extends ConsumerWidget {
                               ),
                               IconButton(
                                 icon: const Icon(Icons.copy),
-                                onPressed: () {
-                                  // TODO: Copier le code
+                                onPressed: () async {
+                                  if (user.referralCode != null) {
+                                    await Clipboard.setData(
+                                      ClipboardData(text: user.referralCode!),
+                                    );
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Code copié !'),
+                                          backgroundColor: AppColors.success,
+                                        ),
+                                      );
+                                    }
+                                  }
                                 },
                               ),
                             ],
@@ -534,6 +577,19 @@ class AccountScreen extends ConsumerWidget {
                         // Navigation gérée par la navigation vendeur
                       },
                     ),
+                    _ServiceTile(
+                      icon: Icons.swap_horiz,
+                      title: 'Propositions de troc',
+                      subtitle: 'Gérer les propositions reçues',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SellerTradesScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -645,8 +701,20 @@ class AccountScreen extends ConsumerWidget {
                               ),
                               IconButton(
                                 icon: const Icon(Icons.copy),
-                                onPressed: () {
-                                  // TODO: Copier le code
+                                onPressed: () async {
+                                  if (user.referralCode != null) {
+                                    await Clipboard.setData(
+                                      ClipboardData(text: user.referralCode!),
+                                    );
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Code copié !'),
+                                          backgroundColor: AppColors.success,
+                                        ),
+                                      );
+                                    }
+                                  }
                                 },
                               ),
                             ],

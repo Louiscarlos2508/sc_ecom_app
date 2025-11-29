@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
-import '../../../../shared/data/mock_data.dart';
 import '../../../../shared/models/user.dart';
+import '../providers/admin_provider.dart';
 
 /// Écran de gestion des vendeurs (admin)
 class AdminSellersScreen extends ConsumerWidget {
@@ -10,7 +10,7 @@ class AdminSellersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sellers = MockData.defaultUsers.where((u) => u.isSeller).toList();
+    final sellers = ref.watch(adminSellersProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -62,25 +62,26 @@ class AdminSellersScreen extends ConsumerWidget {
               subtitle: Text('${seller.email} • ${seller.city}'),
               trailing: PopupMenuButton<String>(
                 onSelected: (value) {
+                  final adminNotifier = ref.read(adminSellersProvider.notifier);
+                  
                   if (value == 'block') {
-                    // TODO: Bloquer le vendeur
+                    adminNotifier.blockSeller(seller.id, 'Raison non spécifiée');
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Bloquer ${seller.name}'),
+                        content: Text('${seller.name} a été bloqué'),
                         backgroundColor: AppColors.error,
                       ),
                     );
                   } else if (value == 'mark') {
-                    // TODO: Marquer le vendeur
+                    adminNotifier.markSeller(seller.id, 'Raison non spécifiée');
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Marquer ${seller.name}'),
+                        content: Text('${seller.name} a été marqué'),
                         backgroundColor: AppColors.warning,
                       ),
                     );
                   } else if (value == 'make_wholesaler') {
-                    // TODO: Marquer comme grossiste (mettre à jour dans la base de données)
-                    // Le vendeur devra attendre l'approbation admin
+                    adminNotifier.markAsWholesaler(seller.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -90,7 +91,7 @@ class AdminSellersScreen extends ConsumerWidget {
                       ),
                     );
                   } else if (value == 'approve_wholesaler') {
-                    // TODO: Approuver le compte grossiste (mettre à jour isWholesalerApproved)
+                    adminNotifier.approveWholesaler(seller.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -100,7 +101,7 @@ class AdminSellersScreen extends ConsumerWidget {
                       ),
                     );
                   } else if (value == 'remove_wholesaler') {
-                    // TODO: Retirer le statut grossiste
+                    adminNotifier.removeWholesalerStatus(seller.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Statut grossiste retiré pour ${seller.name}'),

@@ -72,7 +72,7 @@ class ProductShareScreen extends StatelessWidget {
         foregroundColor: AppColors.onPrimary,
         title: const Text('Partager le produit'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

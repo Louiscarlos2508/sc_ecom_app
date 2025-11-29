@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
+import '../../../troc/presentation/screens/my_trade_products_screen.dart';
 
 /// Écran de paramètres (inspiré Alibaba)
 class SettingsScreen extends ConsumerWidget {
@@ -78,6 +79,19 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: 'Gérer vos adresses',
                 onTap: () {
                   // TODO: Naviguer vers adresses
+                },
+              ),
+              _SettingsTile(
+                icon: Icons.swap_horiz,
+                title: 'Mes produits de troc',
+                subtitle: 'Gérer vos produits téléversés pour le troc',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MyTradeProductsScreen(),
+                    ),
+                  );
                 },
               ),
             ],

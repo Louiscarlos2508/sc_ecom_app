@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
-import '../../../../shared/data/mock_data.dart';
+import '../../../../shared/utils/security_utils.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../product/presentation/providers/product_provider.dart';
 import 'add_product_screen.dart';
 
 /// Écran des produits du vendeur
@@ -12,7 +13,9 @@ class SellerProductsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final myProducts = MockData.demoProducts
+    // Les vendeurs voient tous leurs produits (y compris les produits de troc s'ils en ont créé)
+    final allProducts = ref.watch(productProvider);
+    final myProducts = allProducts
         .where((p) => p.sellerId == user?.id)
         .toList();
 
@@ -119,7 +122,71 @@ class SellerProductsScreen extends ConsumerWidget {
                         ),
                       ],
                       onSelected: (value) {
-                        // TODO: Implémenter modification/suppression
+                        final user = ref.read(currentUserProvider);
+                        if (user == null) return;
+
+                        if (value == 'delete') {
+                          // Vérifier les permissions
+                          if (!SecurityUtils.canDeleteProduct(user, product)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Vous n\'êtes pas autorisé à supprimer ce produit'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                            return;
+                          }
+
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Supprimer le produit'),
+                              content: Text(
+                                'Êtes-vous sûr de vouloir supprimer "${product.name}" ?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Annuler'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    ref.read(productProvider.notifier)
+                                        .removeProduct(product.id);
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Produit supprimé'),
+                                        backgroundColor: AppColors.success,
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    'Supprimer',
+                                    style: TextStyle(color: AppColors.error),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else if (value == 'edit') {
+                          // Vérifier les permissions
+                          if (!SecurityUtils.canModifyProduct(user, product)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Vous n\'êtes pas autorisé à modifier ce produit'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                            return;
+                          }
+                          // TODO: Naviguer vers écran d'édition
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Fonctionnalité d\'édition à venir'),
+                            ),
+                          );
+                        }
                       },
                     ),
                   ),

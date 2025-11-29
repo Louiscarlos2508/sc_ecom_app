@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../../shared/data/mock_data.dart';
+import '../../../product/presentation/providers/product_provider.dart';
+import '../../../order/presentation/providers/order_provider.dart';
 import '../../../../shared/widgets/verified_wholesaler_badge.dart';
 import 'seller_company_info_screen.dart';
+import 'add_product_screen.dart';
 
 /// Dashboard vendeur burkinabè
 class SellerDashboardScreen extends ConsumerWidget {
@@ -14,9 +16,28 @@ class SellerDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final isWholesaler = ref.watch(isWholesalerProvider);
-    final myProducts = MockData.demoProducts
+    // Les vendeurs voient tous leurs produits (y compris les produits de troc s'ils en ont créé)
+    final allProducts = ref.watch(productProvider);
+    final allOrders = ref.watch(orderProvider);
+    
+    final myProducts = allProducts
         .where((p) => p.sellerId == user?.id)
         .toList();
+    
+    // Calculer les ventes du vendeur
+    final mySales = allOrders.where((order) {
+      return order.items.any((item) => item.product.sellerId == user?.id);
+    }).toList();
+    
+    // Calculer le total des ventes
+    int totalSales = 0;
+    for (final order in mySales) {
+      for (final item in order.items) {
+        if (item.product.sellerId == user?.id) {
+          totalSales += item.subtotal;
+        }
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -125,28 +146,76 @@ class SellerDashboardScreen extends ConsumerWidget {
               ),
             if (user?.isWholesaler == true && !user!.isWholesalerApproved)
               const SizedBox(height: 24),
-            // Statistiques rapides
-            Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    title: 'Produits',
-                    value: '${myProducts.length}',
-                    icon: Icons.inventory_2,
-                    color: AppColors.success,
+            // Statistiques rapides (différentes pour grossistes)
+            if (isWholesaler && user?.isWholesalerApproved == true) ...[
+              // Statistiques pour grossistes
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Produits',
+                      value: '${myProducts.length}',
+                      icon: Icons.inventory_2,
+                      color: AppColors.success,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _StatCard(
-                    title: 'Ventes',
-                    value: '0',
-                    icon: Icons.shopping_bag,
-                    color: AppColors.warning,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Commandes B2B',
+                      value: '${mySales.length}',
+                      icon: Icons.business,
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Total ventes',
+                      value: '${(totalSales / 1000).toStringAsFixed(0)}k',
+                      icon: Icons.attach_money,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Quantités min.',
+                      value: '${myProducts.fold<int>(0, (sum, p) => sum + p.minimumQuantity)}',
+                      icon: Icons.production_quantity_limits,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              // Statistiques pour vendeurs simples
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Produits',
+                      value: '${myProducts.length}',
+                      icon: Icons.inventory_2,
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Ventes',
+                      value: '${mySales.length}',
+                      icon: Icons.shopping_bag,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 24),
             // Produits récents
             Text(
@@ -179,7 +248,12 @@ class SellerDashboardScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        // TODO: Naviguer vers ajout produit
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AddProductScreen(),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -191,14 +265,24 @@ class SellerDashboardScreen extends ConsumerWidget {
                 ),
               )
             else
-              ...myProducts.map((product) => Card(
+              ...myProducts.take(5).map((product) => Card(
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.secondary,
-                        child: Icon(
-                          Icons.shopping_bag,
-                          color: AppColors.primary,
+                      leading: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          product.imageUrl,
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 60,
+                              height: 60,
+                              color: AppColors.secondary,
+                              child: const Icon(Icons.image_not_supported),
+                            );
+                          },
                         ),
                       ),
                       title: Text(product.name),

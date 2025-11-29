@@ -15,7 +15,7 @@ class MainNavigationScreen extends ConsumerWidget {
     final currentIndex = ref.watch(navigationIndexProvider);
 
     final List<Widget> screens = [
-      const HomeScreen(),
+      HomeScreen(),
       const CartScreen(),
       const AccountScreen(),
     ];
