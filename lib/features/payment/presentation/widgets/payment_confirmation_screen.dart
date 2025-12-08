@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/utils/price_formatter.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../cart/presentation/providers/cart_provider.dart';
+import '../../../order/presentation/providers/order_provider.dart';
 
 /// Écran de confirmation de paiement Mobile Money
-class PaymentConfirmationScreen extends StatelessWidget {
+class PaymentConfirmationScreen extends ConsumerWidget {
   const PaymentConfirmationScreen({
     super.key,
     required this.transactionId,
@@ -15,8 +19,51 @@ class PaymentConfirmationScreen extends StatelessWidget {
   final String method;
   final int amount;
 
+  Future<void> _createOrder(WidgetRef ref, BuildContext context) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    final cart = ref.read(cartProvider);
+    final selectedItems = cart.values.where((item) => item.selected).toList();
+    if (selectedItems.isEmpty) return;
+
+    final cartNotifier = ref.read(cartProvider.notifier);
+    final deliveryFee = cartNotifier.calculateDeliveryFee(user.city);
+
+    try {
+      final orderId = await ref.read(orderProvider.notifier).createOrderFromCart(
+            userId: user.id,
+            deliveryCity: user.city,
+            deliveryAddress: null, // TODO: Ajouter un champ d'adresse dans le profil
+            notes: null,
+            deliveryFee: deliveryFee,
+          );
+
+      // Marquer la commande comme payée
+      ref.read(orderProvider.notifier).markOrderAsPaid(
+            orderId,
+            method,
+            transactionId,
+          );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la création de la commande: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Créer la commande automatiquement
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _createOrder(ref, context);
+    });
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(

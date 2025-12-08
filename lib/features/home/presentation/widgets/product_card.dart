@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/product.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/widgets/fcfa_price.dart';
 import '../../../../shared/widgets/second_hand_badge.dart';
 import '../../../../shared/widgets/verified_wholesaler_badge.dart';
 import '../../../../shared/widgets/reported_badge.dart';
+import '../../../favorite/presentation/providers/favorite_provider.dart';
 
 /// Carte produit pour la liste d'accueil
-class ProductCard extends StatelessWidget {
+class ProductCard extends ConsumerWidget {
   const ProductCard({
     super.key,
     required this.product,
@@ -18,7 +20,10 @@ class ProductCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isFavorite = ref.watch(favoriteProvider).contains(product.id);
+    final favoriteNotifier = ref.read(favoriteProvider.notifier);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -31,26 +36,56 @@ class ProductCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image du produit
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  product.imageUrl,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
+              // Image du produit avec bouton favori
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      product.imageUrl,
                       height: 200,
-                      color: AppColors.secondary,
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        size: 48,
-                        color: AppColors.textSecondary,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 200,
+                          color: AppColors.secondary,
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            size: 48,
+                            color: AppColors.textSecondary,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Bouton favori
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          favoriteNotifier.toggleFavorite(product.id);
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite ? AppColors.error : AppColors.textSecondary,
+                            size: 24,
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               // Badges

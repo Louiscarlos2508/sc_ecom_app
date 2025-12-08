@@ -4,14 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/models/user.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../order/presentation/screens/order_list_screen.dart';
-import '../../../order/presentation/providers/order_provider.dart';
+import '../../../order/presentation/screens/seller_orders_screen.dart';
+import '../../../favorite/presentation/screens/favorites_screen.dart';
+import '../../../history/presentation/screens/history_screen.dart';
+import '../../../coupon/presentation/screens/coupons_screen.dart';
+import '../../../address/presentation/screens/addresses_screen.dart';
+import '../../../help/presentation/screens/help_screen.dart';
+import '../../../suggestion/presentation/screens/suggestion_screen.dart';
+import 'edit_profile_screen.dart';
 import '../../../seller/presentation/screens/seller_dashboard_screen.dart';
 import '../../../seller/presentation/screens/seller_company_info_screen.dart';
 import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../../troc/presentation/screens/client_trades_screen.dart';
 import '../../../troc/presentation/screens/seller_trades_screen.dart';
-import '../../../../shared/models/order.dart';
 import 'settings_screen.dart';
 
 /// Écran de compte utilisateur (inspiré AliExpress, adapté ECONOMAX)
@@ -46,84 +51,85 @@ class AccountScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.onPrimary,
+        title: const Text('Mon compte'),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: CustomScrollView(
         slivers: [
           // Header avec avatar et nom
-          SliverAppBar(
-            expandedHeight: 120,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                'Mon compte',
-                style: TextStyle(
-                  color: AppColors.onPrimary,
-                  fontWeight: FontWeight.bold,
+          SliverToBoxAdapter(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary,
+                    AppColors.primaryDark,
+                  ],
                 ),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primaryDark,
-                    ],
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: AppColors.onPrimary,
+                    child: Text(
+                      user.name[0].toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 40, left: 16, right: 16),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: AppColors.onPrimary,
-                        child: Text(
-                          user.name[0].toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.name,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(
+                                color: AppColors.onPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              user.name,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    color: AppColors.onPrimary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ],
+                        const SizedBox(height: 4),
+                        Text(
+                          user.city,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: AppColors.onPrimary.withOpacity(0.8),
+                              ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.settings,
-                          color: AppColors.onPrimary,
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const SettingsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -132,72 +138,6 @@ class AccountScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Mes commandes
-                _AccountSection(
-                  title: 'Mes commandes',
-                  actionText: 'Voir tout',
-                  onActionTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const OrderListScreen(),
-                      ),
-                    );
-                  },
-                          children: [
-                            Consumer(
-                              builder: (context, ref, _) {
-                                final orders = ref.watch(userOrdersProvider);
-                                final pendingCount = orders
-                                    .where((o) => o.status == OrderStatus.pending)
-                                    .length;
-                                final shippingCount = orders
-                                    .where((o) => o.status == OrderStatus.shipping)
-                                    .length;
-                                final shippedCount = orders
-                                    .where((o) => o.status == OrderStatus.shipped)
-                                    .length;
-                                final toRateCount = orders
-                                    .where((o) => o.status == OrderStatus.delivered)
-                                    .length;
-                                final returnedCount = orders
-                                    .where((o) => o.status == OrderStatus.returned)
-                                    .length;
-                                
-                                return _OrderStatusRow(
-                                  items: [
-                                    _OrderStatusItem(
-                                      icon: Icons.payment,
-                                      label: 'À payer',
-                                      count: pendingCount,
-                                    ),
-                                    _OrderStatusItem(
-                                      icon: Icons.local_shipping,
-                                      label: 'À expédier',
-                                      count: shippingCount,
-                                    ),
-                                    _OrderStatusItem(
-                                      icon: Icons.delivery_dining,
-                                      label: 'Expédiée',
-                                      count: shippedCount,
-                                    ),
-                                    _OrderStatusItem(
-                                      icon: Icons.rate_review,
-                                      label: 'À noter',
-                                      count: toRateCount,
-                                    ),
-                                    _OrderStatusItem(
-                                      icon: Icons.assignment_return,
-                                      label: 'Retours',
-                                      count: returnedCount,
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ],
-                ),
-                const SizedBox(height: 16),
                 // Actions principales
                 _AccountSection(
                   title: '',
@@ -220,21 +160,36 @@ class AccountScreen extends ConsumerWidget {
                           icon: Icons.history,
                           label: 'Historique',
                           onTap: () {
-                            // TODO: Naviguer vers historique
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const HistoryScreen(),
+                              ),
+                            );
                           },
                         ),
                         _ActionItem(
                           icon: Icons.favorite_border,
                           label: 'Favoris',
                           onTap: () {
-                            // TODO: Naviguer vers favoris
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const FavoritesScreen(),
+                              ),
+                            );
                           },
                         ),
                         _ActionItem(
                           icon: Icons.local_offer,
                           label: 'Coupons',
                           onTap: () {
-                            // TODO: Naviguer vers coupons
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CouponsScreen(),
+                              ),
+                            );
                           },
                         ),
                       ],
@@ -329,35 +284,16 @@ class AccountScreen extends ConsumerWidget {
                   title: 'Services',
                   children: [
                     _ServiceTile(
-                      icon: Icons.account_balance_wallet,
-                      title: 'Portefeuille',
-                      subtitle: 'Solde et paiements',
-                      onTap: () {
-                        // TODO: Naviguer vers portefeuille
-                      },
-                    ),
-                    _ServiceTile(
-                      icon: Icons.card_giftcard,
-                      title: 'Bonus',
-                      subtitle: 'Crédits et récompenses',
-                      onTap: () {
-                        // TODO: Naviguer vers bonus
-                      },
-                    ),
-                    _ServiceTile(
-                      icon: Icons.shopping_bag,
-                      title: 'Crédits shopping',
-                      subtitle: 'Voir mes crédits',
-                      onTap: () {
-                        // TODO: Naviguer vers crédits
-                      },
-                    ),
-                    _ServiceTile(
                       icon: Icons.headset_mic,
                       title: 'Centre d\'aide',
-                      subtitle: 'Support client',
+                      subtitle: 'Support client et FAQ',
                       onTap: () {
-                        // TODO: Naviguer vers aide
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HelpScreen(),
+                          ),
+                        );
                       },
                     ),
                     _ServiceTile(
@@ -365,7 +301,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Suggestion',
                       subtitle: 'Partagez vos idées',
                       onTap: () {
-                        // TODO: Naviguer vers suggestions
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SuggestionScreen(),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -380,7 +321,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Adresses',
                       subtitle: 'Gérer mes adresses de livraison',
                       onTap: () {
-                        // TODO: Naviguer vers adresses
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AddressesScreen(),
+                          ),
+                        );
                       },
                     ),
                     _InfoTile(
@@ -388,7 +334,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Téléphone',
                       subtitle: user.phone,
                       onTap: () {
-                        // TODO: Modifier téléphone
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(field: 'phone'),
+                          ),
+                        );
                       },
                     ),
                     _InfoTile(
@@ -396,7 +347,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Email',
                       subtitle: user.email,
                       onTap: () {
-                        // TODO: Modifier email
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(field: 'email'),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -414,128 +370,119 @@ class AccountScreen extends ConsumerWidget {
   Widget _buildSellerAccount(BuildContext context, User user, bool isWholesaler) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.onPrimary,
+        title: const Text('Mon compte'),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: CustomScrollView(
         slivers: [
-          // Header
-          SliverAppBar(
-            expandedHeight: 120,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'Mon compte',
-                style: TextStyle(
-                  color: AppColors.onPrimary,
-                  fontWeight: FontWeight.bold,
+          // Header avec avatar et nom
+          SliverToBoxAdapter(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary,
+                    AppColors.primaryDark,
+                  ],
                 ),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primaryDark,
-                    ],
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 40, left: 16, right: 16),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: AppColors.onPrimary,
-                        child: Text(
-                          user.name[0].toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: AppColors.onPrimary,
+                    child: Text(
+                      user.name[0].toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.name,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(
+                                color: AppColors.onPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
                           children: [
-                            Text(
-                              user.name,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.success,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'Vendeur',
+                                style: TextStyle(
+                                  color: AppColors.onPrimary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            if (isWholesaler) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.warning,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Grossiste',
+                                  style: TextStyle(
                                     color: AppColors.onPrimary,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                   ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.success,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'Vendeur',
-                                    style: TextStyle(
-                                      color: AppColors.onPrimary,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
                                 ),
-                                if (isWholesaler) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.warning,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text(
-                                      'Grossiste',
-                                      style: TextStyle(
-                                        color: AppColors.onPrimary,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
+                              ),
+                            ],
                           ],
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.settings,
-                          color: AppColors.onPrimary,
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const SettingsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -574,7 +521,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Mes ventes',
                       subtitle: 'Suivre mes commandes',
                       onTap: () {
-                        // Navigation gérée par la navigation vendeur
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SellerOrdersScreen(),
+                          ),
+                        );
                       },
                     ),
                     _ServiceTile(
@@ -734,7 +686,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Téléphone',
                       subtitle: user.phone,
                       onTap: () {
-                        // TODO: Modifier téléphone
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(field: 'phone'),
+                          ),
+                        );
                       },
                     ),
                     _InfoTile(
@@ -742,7 +699,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Email',
                       subtitle: user.email,
                       onTap: () {
-                        // TODO: Modifier email
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(field: 'email'),
+                          ),
+                        );
                       },
                     ),
                     _InfoTile(
@@ -750,7 +712,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Ville',
                       subtitle: user.city,
                       onTap: () {
-                        // TODO: Modifier ville
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(field: 'city'),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -768,103 +735,94 @@ class AccountScreen extends ConsumerWidget {
   Widget _buildAdminAccount(BuildContext context, User user) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.error,
+        foregroundColor: AppColors.onPrimary,
+        title: const Text('Mon compte'),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: CustomScrollView(
         slivers: [
-          // Header
-          SliverAppBar(
-            expandedHeight: 120,
-            pinned: true,
-            backgroundColor: AppColors.error,
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'Compte Admin',
-                style: TextStyle(
-                  color: AppColors.onPrimary,
-                  fontWeight: FontWeight.bold,
+          // Header avec avatar et nom
+          SliverToBoxAdapter(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.error,
+                    AppColors.error.withOpacity(0.8),
+                  ],
                 ),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.error,
-                      AppColors.error.withOpacity(0.8),
-                    ],
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: AppColors.onPrimary,
+                    child: Text(
+                      user.name[0].toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: AppColors.error,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 40, left: 16, right: 16),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: AppColors.onPrimary,
-                        child: Text(
-                          user.name[0].toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: AppColors.error,
-                            fontWeight: FontWeight.bold,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.name,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(
+                                color: AppColors.onPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.onPrimary,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Administrateur ECONOMAX',
+                            style: TextStyle(
+                              color: AppColors.error,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              user.name,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    color: AppColors.onPrimary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            Container(
-                              margin: const EdgeInsets.only(top: 4),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.onPrimary,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'Administrateur ECONOMAX',
-                                style: TextStyle(
-                                  color: AppColors.error,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.settings,
-                          color: AppColors.onPrimary,
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const SettingsScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -910,7 +868,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Email',
                       subtitle: user.email,
                       onTap: () {
-                        // TODO: Modifier email
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(field: 'email'),
+                          ),
+                        );
                       },
                     ),
                     _InfoTile(
@@ -918,7 +881,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Téléphone',
                       subtitle: user.phone,
                       onTap: () {
-                        // TODO: Modifier téléphone
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(field: 'phone'),
+                          ),
+                        );
                       },
                     ),
                     _InfoTile(
@@ -926,7 +894,12 @@ class AccountScreen extends ConsumerWidget {
                       title: 'Ville',
                       subtitle: user.city,
                       onTap: () {
-                        // TODO: Modifier ville
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(field: 'city'),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -991,107 +964,6 @@ class _AccountSection extends StatelessWidget {
             ...children,
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Ligne de statuts de commande
-class _OrderStatusRow extends StatelessWidget {
-  const _OrderStatusRow({required this.items});
-
-  final List<_OrderStatusItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: items.map((item) => Expanded(
-            child: _OrderStatusItemWidget(item: item),
-          )).toList(),
-    );
-  }
-}
-
-/// Item de statut de commande
-class _OrderStatusItem {
-  const _OrderStatusItem({
-    required this.icon,
-    required this.label,
-    required this.count,
-  });
-
-  final IconData icon;
-  final String label;
-  final int count;
-}
-
-class _OrderStatusItemWidget extends StatelessWidget {
-  const _OrderStatusItemWidget({required this.item});
-
-  final _OrderStatusItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const OrderListScreen(),
-                          ),
-                        );
-                      },
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.3),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  item.icon,
-                  color: AppColors.primary,
-                  size: 24,
-                ),
-              ),
-              if (item.count > 0)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '${item.count}',
-                      style: const TextStyle(
-                        color: AppColors.onPrimary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            item.label,
-            style: Theme.of(context).textTheme.bodySmall,
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }

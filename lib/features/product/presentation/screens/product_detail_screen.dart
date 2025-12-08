@@ -11,6 +11,8 @@ import '../widgets/product_price_section.dart';
 import '../widgets/product_seller_info.dart';
 import '../widgets/product_comments_section.dart';
 import '../widgets/product_action_buttons.dart';
+import '../../../history/presentation/providers/history_provider.dart';
+import '../../../favorite/presentation/providers/favorite_provider.dart';
 
 /// Écran de détail d'un produit amélioré (côté client)
 class ProductDetailScreen extends ConsumerWidget {
@@ -24,6 +26,13 @@ class ProductDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final product = ref.watch(productByIdProvider(productId));
+    
+    // Ajouter à l'historique quand le produit est chargé
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (product != null) {
+        ref.read(historyProvider.notifier).addToHistory(product.id);
+      }
+    });
 
     if (product == null) {
       return Scaffold(
@@ -74,6 +83,35 @@ class ProductDetailScreen extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
         ),
         elevation: 0,
+        actions: [
+          Consumer(
+            builder: (context, ref, _) {
+              final isFavorite = ref.watch(favoriteProvider).contains(product.id);
+              final favoriteNotifier = ref.read(favoriteProvider.notifier);
+              
+              return IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                ),
+                tooltip: isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
+                onPressed: () {
+                  favoriteNotifier.toggleFavorite(product.id);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isFavorite
+                            ? 'Retiré des favoris'
+                            : 'Ajouté aux favoris',
+                      ),
+                      backgroundColor: AppColors.success,
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
       body: CustomScrollView(
         slivers: [

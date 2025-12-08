@@ -3,6 +3,7 @@ import '../models/user.dart';
 import '../models/order.dart';
 import '../models/product_comment.dart';
 import '../models/trade.dart';
+import '../models/coupon.dart';
 
 /// Données de test pour ECONOMAX
 class MockData {
@@ -179,6 +180,8 @@ class MockData {
       createdAt: DateTime.now().subtract(const Duration(days: 15)),
       deliveryAddress: 'Secteur 30, Ouagadougou',
       deliveryCity: 'Ouagadougou',
+      deliveryCode: Order.generateDeliveryCode('order1'),
+      deliveredAt: DateTime.now().subtract(const Duration(days: 12)),
     ),
     Order(
       id: 'order2',
@@ -196,6 +199,8 @@ class MockData {
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
       deliveryAddress: 'Secteur 30, Ouagadougou',
       deliveryCity: 'Ouagadougou',
+      deliveryCode: Order.generateDeliveryCode('order2'),
+      shippedAt: DateTime.now().subtract(const Duration(days: 3)),
     ),
     Order(
       id: 'order3',
@@ -213,6 +218,8 @@ class MockData {
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
       deliveryAddress: 'Secteur 30, Ouagadougou',
       deliveryCity: 'Ouagadougou',
+      deliveryCode: Order.generateDeliveryCode('order3'),
+      paidAt: DateTime.now().subtract(const Duration(days: 2)),
     ),
   ];
 
@@ -281,6 +288,42 @@ class MockData {
       status: TradeStatus.rejected,
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
       message: 'Désolé, je ne suis pas intéressé par cet échange.',
+    ),
+  ];
+
+  /// Coupons de démonstration
+  static final List<Coupon> demoCoupons = [
+    Coupon(
+      id: 'coupon1',
+      code: 'ECOMAX2024',
+      description: 'Réduction de bienvenue sur votre première commande',
+      discountType: DiscountType.percentage,
+      discountValue: 10,
+      validFrom: DateTime.now().subtract(const Duration(days: 30)),
+      validUntil: DateTime.now().add(const Duration(days: 60)),
+      minimumPurchase: 5000,
+      maximumDiscount: 2000,
+    ),
+    Coupon(
+      id: 'coupon2',
+      code: 'BURKINA50',
+      description: 'Réduction spéciale pour les commandes de plus de 20 000 FCFA',
+      discountType: DiscountType.fixed,
+      discountValue: 2000,
+      validFrom: DateTime.now().subtract(const Duration(days: 10)),
+      validUntil: DateTime.now().add(const Duration(days: 30)),
+      minimumPurchase: 20000,
+    ),
+    Coupon(
+      id: 'coupon3',
+      code: 'OUAGA15',
+      description: '15% de réduction pour les commandes à Ouagadougou',
+      discountType: DiscountType.percentage,
+      discountValue: 15,
+      validFrom: DateTime.now().subtract(const Duration(days: 5)),
+      validUntil: DateTime.now().add(const Duration(days: 20)),
+      minimumPurchase: 10000,
+      maximumDiscount: 5000,
     ),
   ];
 }

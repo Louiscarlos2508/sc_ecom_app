@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/data/mock_data.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../order/presentation/screens/delivery_verification_screen.dart';
 import '../providers/admin_navigation_provider.dart';
 
 /// Dashboard équipe ECONOMAX
@@ -129,6 +130,21 @@ class AdminDashboardScreen extends ConsumerWidget {
               color: AppColors.warning,
               onTap: () {
                 // TODO: Naviguer vers vendeurs signalés
+              },
+            ),
+            const SizedBox(height: 12),
+            _AdminActionCard(
+              icon: Icons.qr_code_scanner,
+              title: 'Vérification livraison',
+              description: 'Scanner et vérifier les codes de livraison',
+              color: AppColors.primary,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const DeliveryVerificationScreen(),
+                  ),
+                );
               },
             ),
           ],

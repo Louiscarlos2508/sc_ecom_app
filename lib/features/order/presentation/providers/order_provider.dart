@@ -56,8 +56,11 @@ class OrderNotifier extends Notifier<List<Order>> {
     );
 
     // Créer la commande
+    final orderId = 'order_${DateTime.now().millisecondsSinceEpoch}';
+    final deliveryCode = Order.generateDeliveryCode(orderId);
+    
     final order = Order(
-      id: 'order_${DateTime.now().millisecondsSinceEpoch}',
+      id: orderId,
       userId: userId,
       items: orderItems,
       totalAmount: totalAmount,
@@ -67,6 +70,7 @@ class OrderNotifier extends Notifier<List<Order>> {
       deliveryAddress: deliveryAddress,
       deliveryCity: deliveryCity,
       notes: notes,
+      deliveryCode: deliveryCode,
     );
 
     // Ajouter à la liste
@@ -85,17 +89,69 @@ class OrderNotifier extends Notifier<List<Order>> {
   void updateOrderStatus(String orderId, OrderStatus status) {
     state = state.map((order) {
       if (order.id == orderId) {
-        return Order(
-          id: order.id,
-          userId: order.userId,
-          items: order.items,
-          totalAmount: order.totalAmount,
-          deliveryFee: order.deliveryFee,
+        final now = DateTime.now();
+        return order.copyWith(
           status: status,
-          createdAt: order.createdAt,
-          deliveryAddress: order.deliveryAddress,
-          deliveryCity: order.deliveryCity,
-          notes: order.notes,
+          paidAt: status == OrderStatus.paid
+              ? (order.paidAt ?? now)
+              : order.paidAt,
+          shippedAt: status == OrderStatus.shipped
+              ? (order.shippedAt ?? now)
+              : order.shippedAt,
+          deliveredAt: status == OrderStatus.delivered
+              ? (order.deliveredAt ?? now)
+              : order.deliveredAt,
+        );
+      }
+      return order;
+    }).toList();
+  }
+  
+  /// Marquer une commande comme payée
+  void markOrderAsPaid(String orderId, String paymentMethod, String transactionId) {
+    state = state.map((order) {
+      if (order.id == orderId) {
+        return order.copyWith(
+          status: OrderStatus.paid,
+          paymentMethod: paymentMethod,
+          paymentTransactionId: transactionId,
+          paidAt: DateTime.now(),
+        );
+      }
+      return order;
+    }).toList();
+  }
+  
+  /// Marquer une commande comme expédiée (pour vendeur)
+  void markOrderAsShipped(String orderId) {
+    state = state.map((order) {
+      if (order.id == orderId) {
+        final now = DateTime.now();
+        // Générer le deliveryCode s'il n'existe pas encore
+        final deliveryCode = order.deliveryCode ?? Order.generateDeliveryCode(orderId);
+        return order.copyWith(
+          status: OrderStatus.shipped,
+          shippedAt: order.shippedAt ?? now,
+          deliveryCode: deliveryCode,
+        );
+      }
+      return order;
+    }).toList();
+  }
+  
+  /// Marquer une commande comme livrée (pour client)
+  void markOrderAsDelivered(String orderId) {
+    updateOrderStatus(orderId, OrderStatus.delivered);
+  }
+  
+  /// Noter une commande
+  void rateOrder(String orderId, int rating, String? comment) {
+    state = state.map((order) {
+      if (order.id == orderId) {
+        return order.copyWith(
+          rating: rating,
+          ratingComment: comment,
+          ratedAt: DateTime.now(),
         );
       }
       return order;
@@ -137,6 +193,37 @@ final ordersByStatusProvider = Provider.family<List<Order>, OrderStatus>(
   (ref, status) {
     final orders = ref.watch(userOrdersProvider);
     return orders.where((order) => order.status == status).toList();
+  },
+);
+
+/// Provider pour les commandes à noter (livrées mais pas encore notées)
+final ordersToRateProvider = Provider<List<Order>>((ref) {
+  final orders = ref.watch(userOrdersProvider);
+  return orders.where((order) => order.canBeRated).toList();
+});
+
+/// Provider pour les commandes expédiées (peuvent être marquées comme reçues)
+final ordersToReceiveProvider = Provider<List<Order>>((ref) {
+  final orders = ref.watch(userOrdersProvider);
+  return orders.where((order) => order.canBeMarkedAsReceived).toList();
+});
+
+/// Provider pour les commandes d'un vendeur
+final sellerOrdersProvider = Provider.family<List<Order>, String>(
+  (ref, sellerId) {
+    final orders = ref.watch(orderProvider);
+    return orders.where((order) {
+      // Vérifier si au moins un produit de la commande appartient au vendeur
+      return order.items.any((item) => item.product.sellerId == sellerId);
+    }).toList();
+  },
+);
+
+/// Provider pour les commandes d'un vendeur par statut
+final sellerOrdersByStatusProvider = Provider.family<List<Order>, ({String sellerId, OrderStatus status})>(
+  (ref, params) {
+    final orders = ref.watch(sellerOrdersProvider(params.sellerId));
+    return orders.where((order) => order.status == params.status).toList();
   },
 );
 

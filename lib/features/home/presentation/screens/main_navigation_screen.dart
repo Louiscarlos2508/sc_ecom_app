@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/theme/app_colors.dart';
 import 'home_screen.dart';
 import '../../../cart/presentation/screens/cart_screen.dart';
+import '../../../order/presentation/screens/order_list_screen.dart';
 import '../../../profile/presentation/screens/account_screen.dart';
 import '../providers/navigation_provider.dart';
 
@@ -17,6 +18,7 @@ class MainNavigationScreen extends ConsumerWidget {
     final List<Widget> screens = [
       HomeScreen(),
       const CartScreen(),
+      const OrderListScreen(),
       const AccountScreen(),
     ];
 
@@ -40,8 +42,12 @@ class MainNavigationScreen extends ConsumerWidget {
             label: 'Panier',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag),
+            label: 'Commandes',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: 'Moi',
+            label: 'Mon compte',
           ),
         ],
       ),
