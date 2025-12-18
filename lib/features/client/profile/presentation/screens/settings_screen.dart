@@ -191,6 +191,12 @@ class SettingsScreen extends ConsumerWidget {
                     children: [
                       const Text('E-commerce 100% burkinabè'),
                       const Text('Ouagadougou, Bobo, Koudougou & partout'),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Développé par Carlos Simpore',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const Text('Scalario'),
                     ],
                   );
                 },

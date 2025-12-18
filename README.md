@@ -102,9 +102,9 @@ Voir [ARCHITECTURE.md](./ARCHITECTURE.md) pour les regles completes.
 
 Ce projet est prive et proprietaire d'ECONOMAX.
 
-## Equipe
+## Developpement
 
-Developpe avec amour pour le marche burkinabe.
+Developpe par **Carlos Simpore** de **Scalario** pour **ECONOMAX**.
 
 ---
 

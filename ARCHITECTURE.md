@@ -120,3 +120,7 @@ Chaque module suit la séparation en 3 couches :
 ## Nom du projet
 
 **ECONOMAX** - E-commerce 100% burkinabè (Ouagadougou, Bobo, Koudougou & partout)
+
+## Développement
+
+Développé par **Carlos Simpore** de **Scalario** pour **ECONOMAX**.

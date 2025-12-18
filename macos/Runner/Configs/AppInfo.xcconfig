@@ -11,4 +11,4 @@ PRODUCT_NAME = ecom_app_sc
 PRODUCT_BUNDLE_IDENTIFIER = com.example.ecomAppSc
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2025 ECONOMAX. Développé par Carlos Simpore (Scalario). All rights reserved.
