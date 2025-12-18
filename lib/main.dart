@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'shared/theme/app_theme.dart';
+import 'shared/core/theme/app_theme.dart';
 import 'features/auth/presentation/screens/splash_screen.dart';
 
 void main() {

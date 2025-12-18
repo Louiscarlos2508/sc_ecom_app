@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/theme/app_colors.dart';
-import '../../../../shared/models/user.dart';
+import '../../../../shared/core/theme/app_colors.dart';
+import '../../../../shared/core/models/user.dart';
 import '../providers/admin_provider.dart';
 
 /// Écran de gestion des vendeurs (admin)

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/models/user.dart';
-import '../../../../shared/data/mock_data.dart';
-import '../../../../shared/utils/security_utils.dart';
+import '../../../../shared/core/models/user.dart';
+import '../../../../shared/core/data/mock_data.dart';
+import '../../../../shared/core/utils/security_utils.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Notifier pour la gestion admin des vendeurs

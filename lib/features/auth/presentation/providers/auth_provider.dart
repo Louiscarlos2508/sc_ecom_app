@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/models/user.dart';
-import '../../../../shared/data/mock_data.dart';
+import '../../../../shared/core/models/user.dart';
+import '../../../../shared/core/data/mock_data.dart';
 
 /// Notifier pour l'utilisateur connecté
 class CurrentUserNotifier extends Notifier<User?> {

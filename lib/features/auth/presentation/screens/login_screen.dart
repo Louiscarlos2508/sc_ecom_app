@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/theme/app_colors.dart';
-import '../../../../shared/models/user.dart';
+import '../../../../shared/core/theme/app_colors.dart';
+import '../../../../shared/core/models/user.dart';
 import 'register_screen.dart';
-import '../../../home/presentation/screens/user_navigation_screen.dart';
+import '../../../client/home/presentation/screens/user_navigation_screen.dart';
 import '../providers/auth_form_provider.dart';
 import '../providers/auth_provider.dart';
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/theme/app_colors.dart';
-import '../../../../shared/data/mock_data.dart';
+import '../../../../shared/core/theme/app_colors.dart';
+import '../../../../shared/core/data/mock_data.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../order/presentation/screens/delivery_verification_screen.dart';
+import '../../../client/orders/presentation/screens/delivery_verification_screen.dart';
 import '../providers/admin_navigation_provider.dart';
 
 /// Dashboard équipe ECONOMAX

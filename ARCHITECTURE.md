@@ -2,114 +2,101 @@
 
 ## Structure du projet
 
+Le projet suit une architecture **User-Type-First** organisée par rôle d'utilisateur (client, vendeur, admin) avec séparation des couches (data/domain/presentation).
+
 ```
 lib/
-├── features/                    # Features organisées par domaine métier
-│   ├── auth/                   # Authentification
-│   │   ├── data/              # Sources de données (API, local)
-│   │   ├── domain/            # Logique métier (entities, repositories)
-│   │   └── presentation/      # UI (screens, widgets)
-│   │       └── screens/
-│   │           ├── login_screen.dart
-│   │           └── register_screen.dart
-│   │
-│   ├── home/                   # Accueil
-│   │   └── presentation/
-│   │       └── screens/
-│   │           └── home_screen.dart
-│   │
-│   ├── product/                # Produits
+├── features/                    # Features organisées par type d'utilisateur
+│   ├── auth/                   # Authentification (partagé)
 │   │   ├── data/
 │   │   ├── domain/
 │   │   └── presentation/
-│   │       └── screens/
-│   │           └── product_detail_screen.dart
 │   │
-│   ├── cart/                   # Panier
-│   │   ├── data/
-│   │   ├── domain/
-│   │   └── presentation/
-│   │       └── screens/
-│   │           └── cart_screen.dart
+│   ├── client/                 # Module client
+│   │   ├── address/           # Gestion des adresses
+│   │   ├── cart/              # Panier
+│   │   ├── coupon/            # Codes promo
+│   │   ├── favorite/          # Favoris
+│   │   ├── help/              # Aide
+│   │   ├── history/           # Historique
+│   │   ├── home/              # Accueil
+│   │   ├── navigation/        # Navigation principale
+│   │   ├── notification/      # Notifications
+│   │   ├── orders/            # Commandes
+│   │   ├── payment/           # Paiement
+│   │   ├── profile/           # Profil
+│   │   ├── referral/          # Parrainage
+│   │   ├── search/            # Recherche
+│   │   └── suggestion/        # Suggestions
+│   │       ├── data/          # Sources de données
+│   │       ├── domain/        # Logique métier
+│   │       └── presentation/  # UI (screens, widgets, providers)
 │   │
-│   ├── order/                  # Commandes
-│   │   ├── data/
-│   │   ├── domain/
-│   │   └── presentation/
-│   │       └── screens/
-│   │           └── order_list_screen.dart
+│   ├── seller/                 # Module vendeur
+│   │   ├── company/           # Informations entreprise
+│   │   ├── dashboard/         # Tableau de bord
+│   │   ├── navigation/        # Navigation vendeur
+│   │   ├── orders/            # Commandes vendeur
+│   │   ├── products/          # Gestion produits
+│   │   └── trades/            # Gestion trocs
+│   │       ├── data/
+│   │       ├── domain/
+│   │       └── presentation/
 │   │
-│   ├── seller/                 # Dashboard vendeur burkinabè
-│   │   ├── data/
-│   │   ├── domain/
-│   │   └── presentation/
-│   │       └── screens/
-│   │           └── seller_dashboard_screen.dart
-│   │
-│   ├── admin/                  # Dashboard équipe ECONOMAX
-│   │   ├── data/
-│   │   ├── domain/
-│   │   └── presentation/
-│   │       └── screens/
-│   │           └── admin_dashboard_screen.dart
-│   │
-│   ├── search/                 # Recherche
-│   │   ├── data/
-│   │   ├── domain/
-│   │   └── presentation/
-│   │       └── screens/
-│   │           └── search_screen.dart
-│   │
-│   ├── referral/              # Système codes parrainage
-│   │   ├── data/
-│   │   ├── domain/
-│   │   └── presentation/
-│   │       └── screens/
-│   │           └── referral_screen.dart
-│   │
-│   └── troc/                  # Vrai troc à la burkinabè
+│   └── admin/                  # Module admin
 │       ├── data/
 │       ├── domain/
 │       └── presentation/
-│           └── screens/
-│               └── troc_screen.dart
 │
-└── shared/                     # Code partagé entre features
-    ├── theme/                 # Thème et couleurs
-    │   ├── app_colors.dart    # Palette officielle ECONOMAX
-    │   └── app_theme.dart     # Configuration du thème
+└── shared/                      # Code partagé
+    ├── core/                   # Composants de base partagés
+    │   ├── constants/         # Constantes
+    │   ├── data/              # Données mock, services de base
+    │   ├── models/            # Modèles partagés (Product, Order, User, etc.)
+    │   ├── services/          # Services partagés (API, storage)
+    │   ├── theme/             # Thème et couleurs
+    │   │   ├── app_colors.dart
+    │   │   └── app_theme.dart
+    │   ├── utils/             # Utilitaires (validators, formatters, etc.)
+    │   └── widgets/           # Widgets réutilisables
     │
-    ├── widgets/               # Widgets réutilisables
-    │   └── fcfa_price.dart   # Widget pour afficher prix en FCFA
-    │
-    ├── utils/                 # Utilitaires
-    │   └── price_formatter.dart
-    │
-    ├── models/                # Modèles partagés
-    ├── services/              # Services partagés (API, storage)
-    └── constants/             # Constantes
+    └── features/               # Features complètes partagées
+        ├── product/           # Module produit (partagé client/vendeur)
+        └── troc/              # Module troc (partagé client/vendeur)
+            ├── data/
+            ├── domain/
+            └── presentation/
 ```
 
 ## Principes d'architecture
 
-### Feature-First
-Chaque feature est autonome avec sa propre structure :
-- `data/` : Sources de données (API, cache local)
-- `domain/` : Logique métier pure (entities, use cases, repositories interfaces)
-- `presentation/` : UI (screens, widgets, providers)
+### User-Type-First
+L'organisation priorise le regroupement par type d'utilisateur :
+- **`features/client/`** : Toutes les fonctionnalités client
+- **`features/seller/`** : Toutes les fonctionnalités vendeur
+- **`features/admin/`** : Fonctionnalités admin
+- **`features/auth/`** : Authentification partagée
 
 ### Clean Architecture
-Séparation claire des responsabilités :
-- **Presentation** : UI uniquement, pas de logique métier
-- **Domain** : Logique métier pure, indépendante de Flutter
-- **Data** : Implémentation des repositories, accès aux données
+Chaque module suit la séparation en 3 couches :
+- **`data/`** : Sources de données (API, cache local, repositories implémentations)
+- **`domain/`** : Logique métier pure (entities, use cases, repository interfaces)
+- **`presentation/`** : UI (screens, widgets, providers/state management)
+
+### Shared Code Organization
+- **`shared/core/`** : Composants primitifs réutilisables (models, widgets, utils, theme)
+- **`shared/features/`** : Features complètes partagées entre plusieurs types d'utilisateurs (product, troc)
 
 ### State Management
-- **Riverpod 2.x** uniquement
-- **AsyncNotifier** pour les appels API
-- **freezed** pour les modèles immutables
+- **Riverpod 2.x** pour la gestion d'état
+- **Notifier/AsyncNotifier** pour les providers
+- Providers dans `presentation/providers/`
 
 ## Règles de développement
+
+### Imports
+- **Utiliser des imports de package** : `package:economax/...`
+- **Éviter les imports relatifs** pour les imports cross-module
 
 ### Limites de lignes
 - **Screen/Page** : max 200 lignes
@@ -117,20 +104,19 @@ Séparation claire des responsabilités :
 
 ### Couleurs
 - **Interdit** : couleurs en dur
-- **Obligatoire** : utiliser `AppColors()` partout
+- **Obligatoire** : utiliser `AppColors` partout
 
 ### Prix
 - **Format** : `1 500 FCFA` (espacement + " FCFA" à la fin)
-- **Widget** : utiliser `FcfaPrice` widget
+- **Widget** : utiliser `PriceFormatter` pour le formatage
 
 ### Padding & Spacing
 - Padding autorisés : 16, 20, 24, 32 uniquement
 - `Gap()` obligatoire dans Column/Row
 
 ### Const
-- `const` partout où c'est possible
+- `const` partout où c'est possible pour optimiser les rebuilds
 
 ## Nom du projet
 
-**ECONOMAX** - E-commerce 100% burkinabè
-
+**ECONOMAX** - E-commerce 100% burkinabè (Ouagadougou, Bobo, Koudougou & partout)

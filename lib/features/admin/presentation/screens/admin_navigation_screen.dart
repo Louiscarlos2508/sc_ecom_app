@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/core/theme/app_colors.dart';
 import '../providers/admin_navigation_provider.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_sellers_screen.dart';
-import '../../../profile/presentation/screens/account_screen.dart';
+import '../../../client/profile/presentation/screens/account_screen.dart';
 
 /// Navigation admin avec bottom bar
 class AdminNavigationScreen extends ConsumerWidget {

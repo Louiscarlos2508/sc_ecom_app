@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/theme/app_colors.dart';
-import '../../../../shared/utils/validators.dart';
-import '../../../../shared/utils/security_utils.dart';
-import '../../../home/presentation/screens/user_navigation_screen.dart';
+import '../../../../shared/core/theme/app_colors.dart';
+import '../../../../shared/core/utils/validators.dart';
+import '../../../../shared/core/utils/security_utils.dart';
+import '../../../client/home/presentation/screens/user_navigation_screen.dart';
 import '../providers/auth_form_provider.dart';
 
 /// Écran d'inscription avec code parrainage obligatoire
